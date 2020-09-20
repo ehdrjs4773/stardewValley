@@ -2,37 +2,42 @@
 #include "mainGame.h"
 
 //=============================================================
-//	## ÃÊ±âÈ­ ## init()
+//	## ì´ˆê¸°í™” ## init()
 //=============================================================
 HRESULT mainGame::init()
 {
 
+	cout << "ê¹ƒí—ˆë¸Œ í…ŒìŠ¤íŠ¸ìš© ì½”ë“œìž…ë‹ˆë‹¤." << endl;
+	cout << "ì´ê²Œ ì œëŒ€ë¡œ ë“¤ì–´ì™€ì ¸ìžˆìœ¼ë©´ ë¨!" << endl;
+	cout << "ì•„ã„´ã„´ì••ã…ˆã„·" << endl;
+
 	gameNode::init();
 	
-	/*¾ÕÀ¸·Î ¸ÞÀÎ°ÔÀÓÀº °¢°¢ÀÇ ¾Àµé¸¸ °ü¸®¸¦ ÇÑ´Ù*/
-	/*ÀÌ°÷¿¡¼­ °¢°¢ÀÇ ¾ÀµéÀ» Ãß°¡ÇÏ°í ÇöÀç¾ÀÀ» ¼³Á¤ÇÑ´Ù*/
+	cout << "dã…ë…„ã…‡ížˆê²Œì„¸ì—¬" << endl;
+	/*ì•žìœ¼ë¡œ ë©”ì¸ê²Œìž„ì€ ê°ê°ì˜ ì”¬ë“¤ë§Œ ê´€ë¦¬ë¥¼ í•œë‹¤*/
+	/*ì´ê³³ì—ì„œ ê°ê°ì˜ ì”¬ë“¤ì„ ì¶”ê°€í•˜ê³  í˜„ìž¬ì”¬ì„ ì„¤ì •í•œë‹¤*/
 
-	/*¾ÀÃß°¡*/
-	SCENEMANAGER->addScene("INIÅ×½ºÆ®", new iniTestScene);
-	//SCENEMANAGER->addScene("»ç¿îµå", new soundTestScene);
-	SCENEMANAGER->addScene("ÇÈ¼¿Ãæµ¹", new pixelCollisionScene);
-	SCENEMANAGER->addScene("·ÎµùÈ­¸é", new loadingScene);
-	SCENEMANAGER->addScene("¸ÊÅøÈ­¸é", new maptoolScene);
-	SCENEMANAGER->addScene("Å×½ºÆ®", new testScene);
+	/*ì”¬ì¶”ê°€*/
+	SCENEMANAGER->addScene("INIí…ŒìŠ¤íŠ¸", new iniTestScene);
+	//SCENEMANAGER->addScene("ì‚¬ìš´ë“œ", new soundTestScene);
+	SCENEMANAGER->addScene("í”½ì…€ì¶©ëŒ", new pixelCollisionScene);
+	SCENEMANAGER->addScene("ë¡œë”©í™”ë©´", new loadingScene);
+	SCENEMANAGER->addScene("ë§µíˆ´í™”ë©´", new maptoolScene);
+	SCENEMANAGER->addScene("í…ŒìŠ¤íŠ¸", new testScene);
 
-	cout << "³ª´Â ¾Æ¹« ¿µÇâÀÌ ¾ø´Ù" << endl;
-	cout << " ¾ßÈ£~ " << endl;
-	/*ÇöÀç¾À*/
-	SCENEMANAGER->loadScene("¸ÊÅøÈ­¸é");
-	//SCENEMANAGER->loadScene("Å×½ºÆ®");
+	cout << "ë‚˜ëŠ” ì•„ë¬´ ì˜í–¥ì´ ì—†ë‹¤" << endl;
+	cout << " ì•¼í˜¸~ " << endl;
+	/*í˜„ìž¬ì”¬*/
+	SCENEMANAGER->loadScene("ë§µíˆ´í™”ë©´");
+	//SCENEMANAGER->loadScene("í…ŒìŠ¤íŠ¸");
 	
-	cout << "ÀÌÂÊÀúÂÊ¿¡" << endl;
-	cout << " coutÀ» ¹èÄ¡½ÃÅ²´Ù" << endl;
+	cout << "ì´ìª½ì €ìª½ì—" << endl;
+	cout << " coutì„ ë°°ì¹˜ì‹œí‚¨ë‹¤" << endl;
 	return S_OK;
 }
 
 //=============================================================
-//	## ÇØÁ¦ ## release()
+//	## í•´ì œ ## release()
 //=============================================================
 void mainGame::release()
 {
@@ -40,36 +45,36 @@ void mainGame::release()
 }
 
 //=============================================================
-//	## ¾÷µ¥ÀÌÆ® ## update()
+//	## ì—…ë°ì´íŠ¸ ## update()
 //=============================================================
 void mainGame::update()
 {
 	gameNode::update();
 	
-	//¾À¸Å´ÏÁ® ¾÷µ¥ÀÌÆ®
+	//ì”¬ë§¤ë‹ˆì ¸ ì—…ë°ì´íŠ¸
 	SCENEMANAGER->update();
 
-	//»ç¿îµå¸Å´ÏÁ® ¾÷µ¥ÀÌÆ® (ÀÌ°Ô ¾øÀ¸¸é »ç¿îµå¸Å´ÏÁ® Á¦´ë·Î µ¿ÀÛÇÏÁö ¾Ê´Â´Ù!!!)
+	//ì‚¬ìš´ë“œë§¤ë‹ˆì ¸ ì—…ë°ì´íŠ¸ (ì´ê²Œ ì—†ìœ¼ë©´ ì‚¬ìš´ë“œë§¤ë‹ˆì ¸ ì œëŒ€ë¡œ ë™ìž‘í•˜ì§€ ì•ŠëŠ”ë‹¤!!!)
 	SOUNDMANAGER->update();
 }
 
 //=============================================================
-//	## ·»´õ ## render()
+//	## ë Œë” ## render()
 //=============================================================
 void mainGame::render()
 {
-	//Èò»ö ºó ºñÆ®¸Ê (ÀÌ°ÍÀº ·»´õ¿¡ ±×³É µÎ±â)
+	//í°ìƒ‰ ë¹ˆ ë¹„íŠ¸ë§µ (ì´ê²ƒì€ ë Œë”ì— ê·¸ëƒ¥ ë‘ê¸°)
 	PatBlt(getMemDC(), 0, 0, WINSIZEX, WINSIZEY, BLACKNESS);
 //=============================================================
 	
-	//±ÛÀÚ»ö ¹è°æ ¾ø¾Ö±â
+	//ê¸€ìžìƒ‰ ë°°ê²½ ì—†ì• ê¸°
 	SetBkMode(getMemDC(), TRANSPARENT);
 
-	//¾À¸Å´ÏÁ® ·»´õ
+	//ì”¬ë§¤ë‹ˆì ¸ ë Œë”
 	SCENEMANAGER->render();
 	
 //=============================================================
-	//¹é¹öÆÛÀÇ ³»¿ëÀ» È­¸éDC¿¡ ±×¸°´Ù (ÀÌ°Íµµ ·»´õ¿¡ ±×³É µÎ±â)
+	//ë°±ë²„í¼ì˜ ë‚´ìš©ì„ í™”ë©´DCì— ê·¸ë¦°ë‹¤ (ì´ê²ƒë„ ë Œë”ì— ê·¸ëƒ¥ ë‘ê¸°)
 	this->getBackBuffer()->render(getHDC());
 }
 
