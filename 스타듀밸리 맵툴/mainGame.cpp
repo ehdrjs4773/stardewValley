@@ -7,9 +7,6 @@
 HRESULT mainGame::init()
 {
 
-	cout << "깃허브 테스트용 코드입니다." << endl;
-	cout << "이게 제대로 들어와져있으면 됨!" << endl;
-
 	gameNode::init();
 	
 	/*앞으로 메인게임은 각각의 씬들만 관리를 한다*/
@@ -22,9 +19,15 @@ HRESULT mainGame::init()
 	SCENEMANAGER->addScene("로딩화면", new loadingScene);
 	SCENEMANAGER->addScene("맵툴화면", new maptoolScene);
 	SCENEMANAGER->addScene("테스트", new testScene);
+
+	cout << "나는 아무 영향이 없다" << endl;
+	cout << " 야호~ " << endl;
 	/*현재씬*/
 	SCENEMANAGER->loadScene("맵툴화면");
 	//SCENEMANAGER->loadScene("테스트");
+	
+	cout << "이쪽저쪽에" << endl;
+	cout << " cout을 배치시킨다" << endl;
 	return S_OK;
 }
 
