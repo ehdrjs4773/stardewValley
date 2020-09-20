@@ -9,9 +9,11 @@ HRESULT mainGame::init()
 
 	cout << "깃허브 테스트용 코드입니다." << endl;
 	cout << "이게 제대로 들어와져있으면 됨!" << endl;
+	cout << "아ㄴㄴ압ㅈㄷ" << endl;
 
 	gameNode::init();
 	
+	cout << "dㅏ년ㅇ히게세여" << endl;
 	/*앞으로 메인게임은 각각의 씬들만 관리를 한다*/
 	/*이곳에서 각각의 씬들을 추가하고 현재씬을 설정한다*/
 
