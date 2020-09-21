@@ -6,15 +6,14 @@
 #define TILEY 100
 #define DISPLAYX 30
 #define DISPLAYY 30
-#define SPDISPLAYX 20
-#define SPDISPLAYY 20
-
 #define TILESIZEX (TILEX * TILESIZE) //640
 #define TILESIZEY (TILEY * TILESIZE) //640
 
 //이미지 타일 (화면 우측상단에 붙여놓을 샘플타일)
-#define SAMPLETILEX 25
-#define SAMPLETILEY 79
+//#define SAMPLETILEX 25
+//#define SAMPLETILEY 80
+#define SAMPLEDISPLAYX 20
+#define SAMPLEDISPLAYY 20
 
 //맵툴에서 사용할 컨트롤
 enum CTRL
@@ -23,6 +22,13 @@ enum CTRL
 	CTRL_TERRAIN, CTRL_OBJECT, CTRL_ERASER
 };
 
+enum SEASON
+{
+	SPRING,
+	SUMMER,
+	AUTUMN,
+	WINTER,
+};
 //지형
 enum TERRAIN
 {
@@ -43,6 +49,7 @@ struct tagTile
 	TERRAIN terrain;
 	OBJECT obj;
 	RECT rc;
+	SEASON season;
 
 	int terrainFrameX;
 	int terrainFrameY;

@@ -6,7 +6,8 @@ class maptoolScene : public gameNode
 {
 private:
 	tagTile _tile[TILEY][TILEX]; //인게임화면(왼쪽화면)에 사용되는 타일 총 400개
-	tagTile _sampleTile[SAMPLETILEY][SAMPLETILEX];
+	std::vector<std::vector<tagTile>> _sampleTile;
+	std::vector<tagTile> _sampleTileX;
 	tagCurrentTile _currentTile; //현재타일
 
 	RECT _rcSave;		//세이브
@@ -14,11 +15,15 @@ private:
 	RECT _rcTerrain;	//지형
 	RECT _rcObject;		//오브젝트
 	RECT _rcEraser;		//지우개 (오브젝트만 지운다, 지형은 덮어씌운다)
+	RECT _rcSpring;
+	RECT _rcSummer;
+	RECT _rcAutumn;
+	RECT _rcWinter;
 
 	RECT horScroll;
 	RECT vertScroll;
-	RECT _sphorScroll;
-	RECT _spvertScroll;
+	RECT sampleHorScroll;
+	RECT sampleVertScroll;
 
 	CTRL _ctrlSelect;	//현재 어떤 컨트롤 상태인지
 
@@ -27,15 +32,16 @@ private:
 	int last_i, last_j;
 	bool _click;
 	bool _release;
-	int stileX, stileY;
-	POINT SpscrollLock;
-	POINT SpcurrentScroll;
-	bool isSpHorLock, isSpVertLock;
+
+	bool isSelectSeason;
+	SEASON _currentSeason;
 
 	int tileX, tileY;
+	int sampleTileX, sampleTileY;
+	int sampleTileMaxFrameX, sampleTileMaxFrameY;
 	POINT scrollLock;
 	POINT currentScroll;
-	bool isHorLock, isVertLock;
+	bool isHorLock, isVertLock, isSampleHorLock, isSampleVertLock;
 
 public:
 	HRESULT init();
@@ -54,6 +60,8 @@ public:
 	void lockScroll();
 	void moveScroll();
 	void moveTile();
+	void selectSeason();
+	void resetSampleTile();
 	//지형, 오브젝트 선택하기
 	TERRAIN terrainSelect(int frameX, int frameY);
 	OBJECT objectSelect(int frameX, int frameY);

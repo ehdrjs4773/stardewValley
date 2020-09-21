@@ -4,9 +4,13 @@
 HRESULT maptoolScene::init()
 {
 	//타일맵 이미지 초기화
-	IMAGEMANAGER->addFrameImage("tilemap", "Images/BMP/봄(농장).bmp", 400, 1264, SAMPLETILEX, SAMPLETILEY);
+	IMAGEMANAGER->addFrameImage("outdoorSpring", "Images/BMP/봄(농장).bmp", 400, 1264, 25, 79);
+	IMAGEMANAGER->addFrameImage("outdoorWinter", "Images/BMP/outdoor(Winter).bmp", 400, 240, 25, 15);
 	IMAGEMANAGER->addImage("배경", "Images/background.bmp", WINSIZEX, WINSIZEY);
+
 	//맵툴세팅
+	sampleTileMaxFrameX = IMAGEMANAGER->findImage("outdoorSpring")->getMaxFrameX() + 1;
+	sampleTileMaxFrameY = IMAGEMANAGER->findImage("outdoorSpring")->getMaxFrameY() + 1;
 	this->maptoolSetup();
 	this->setScroll();
 
@@ -18,11 +22,15 @@ HRESULT maptoolScene::init()
 	_currentTile.x = 0;
 	_currentTile.y = 6;
 
-	tileX = tileY = 0;
-	stileX = stileY = 0;
+	_currentSeason = SPRING;
 
-	isSpHorLock = isSpVertLock = false;
-	isHorLock = isVertLock = false;
+	sampleTileX = 0;
+	sampleTileY = 0;
+
+
+	tileX = tileY = 0;
+
+	isSelectSeason = isHorLock = isVertLock = isSampleHorLock = isSampleVertLock = false;
 
 	//지형그리기 속성으로 시작하기
 	_ctrlSelect = CTRL_TERRAIN;
@@ -36,12 +44,13 @@ void maptoolScene::release()
 
 void maptoolScene::update()
 {
-
 	setTerrainMap();
 
 	if (INPUT->GetKeyDown(VK_LBUTTON))
 	{
 		lockScroll();
+		selectSeason();
+
 		if (PtInRect(&_rcSave, _ptMouse))
 		{
 			_ctrlSelect = CTRL_SAVE;
@@ -55,23 +64,26 @@ void maptoolScene::update()
 		if (PtInRect(&_rcTerrain, _ptMouse))
 		{
 			_ctrlSelect = CTRL_TERRAIN;
+			isSelectSeason = true;
 		}
 		if (PtInRect(&_rcObject, _ptMouse))
 		{
 			_ctrlSelect = CTRL_OBJECT;
+			isSelectSeason = true;
 		}
 		if (PtInRect(&_rcEraser, _ptMouse))
 		{
 			_ctrlSelect = CTRL_ERASER;
+			isSelectSeason = false;
 		}
 	}
 	if (INPUT->GetKeyUp(VK_LBUTTON))
 	{
-		isHorLock = isVertLock = isSpHorLock = isSpVertLock =  false;
+		isHorLock = isVertLock = isSampleHorLock = isSampleVertLock = false;
 	}
 	if (INPUT->GetKey(VK_LBUTTON))
 	{
-		if (isHorLock || isVertLock || isSpHorLock || isSpVertLock)
+		if (isHorLock || isVertLock || isSampleHorLock || isSampleVertLock)
 		{
 			moveScroll();
 		}
@@ -80,60 +92,101 @@ void maptoolScene::update()
 			this->setMap();
 		}
 	}
-
 	moveTile();
 
-	std::cout << tileX << "\t" << tileY << "\t" << horScroll.left - _tile[0][0].rc.left << "\t" << vertScroll.top - _tile[0][0].rc.top << std::endl;
+	std::cout << _sampleTile.size() << "\t" << _sampleTileX.size() << std::endl;
 }
 
 void maptoolScene::render()
 {
 	IMAGEMANAGER->render("배경", getMemDC(), 0, 0);
+
 	//타일맵 이미지 전체화면 우측상단에 배치하기
-	//IMAGEMANAGER->render("tilemap", getMemDC(), 660, 0);
-
-	//인게임 화면 지형을 그린다
-	for (int i = 0; i < DISPLAYX; i++)
+	switch (_currentSeason)
 	{
-		for (int j = 0; j < DISPLAYY; j++)
+	case SPRING:
+		for (int i = 0; i < SAMPLEDISPLAYY; i++)
 		{
-			IMAGEMANAGER->frameRender("tilemap", getMemDC(), _tile[i][j].rc.left, _tile[i][j].rc.top,
-				_tile[i + tileY][j + tileX].terrainFrameX, _tile[i + tileY][j + tileX].terrainFrameY);
-
-			//인게임 화면 오브젝트 그린다
-			if (_tile[i + tileY][j + tileX].obj == OBJ_NONE) continue;
-			IMAGEMANAGER->frameRender("tilemap", getMemDC(), _tile[i][j].rc.left, _tile[i][j].rc.top,
-				_tile[i + tileY][j + tileX].objFrameX, _tile[i + tileY][j + tileX].objFrameY);
+			for (int j = 0; j < SAMPLEDISPLAYX; j++)
+			{
+				if (j < sampleTileMaxFrameX && i < sampleTileMaxFrameY)
+				{
+					IMAGEMANAGER->frameRender("outdoorSpring", getMemDC(), _sampleTile[i][j].rc.left, _sampleTile[i][j].rc.top,
+						_sampleTile[i + sampleTileY][j + sampleTileX].terrainFrameX, _sampleTile[i + sampleTileY][j + sampleTileX].terrainFrameY);
+				}
+			}
 		}
-	}
-
-
-	for (int i = 0; i < SPDISPLAYX; i++)
-	{
-		for (int j = 0; j < SPDISPLAYY; j++)
+		break;
+	case SUMMER:
+		break;
+	case AUTUMN:
+		break;
+	case WINTER:
+		for (int i = 0; i < SAMPLEDISPLAYY; i++)
 		{
-			IMAGEMANAGER->frameRender("tilemap", getMemDC(), _sampleTile[i][j].rc.left, _sampleTile[i][j].rc.top,
-				_sampleTile[i + stileY][j + stileX].terrainFrameX, _sampleTile[i + stileY][j + stileX].terrainFrameY);
+			for (int j = 0; j < SAMPLEDISPLAYX; j++)
+			{
+				if (j < sampleTileMaxFrameX && i < sampleTileMaxFrameY)
+				{
+					IMAGEMANAGER->frameRender("outdoorWinter", getMemDC(), _sampleTile[i][j].rc.left, _sampleTile[i][j].rc.top,
+						_sampleTile[i + sampleTileY][j + sampleTileX].terrainFrameX, _sampleTile[i + sampleTileY][j + sampleTileX].terrainFrameY);
+				}
+			}
+		}
+		break;
+	}
+	
+	//인게임 화면 지형을 그린다
+	for (int i = 0; i < DISPLAYY; i++)
+	{
+		for (int j = 0; j < DISPLAYX; j++)
+		{
+			switch (_tile[i + tileY][j + tileX].season)
+			{
+			case SPRING:
+				IMAGEMANAGER->frameRender("outdoorSpring", getMemDC(), _tile[i][j].rc.left, _tile[i][j].rc.top,
+					_tile[i + tileY][j + tileX].terrainFrameX, _tile[i + tileY][j + tileX].terrainFrameY);
+
+				//인게임 화면 오브젝트 그린다
+				if (_tile[i + tileY][j + tileX].obj == OBJ_NONE) continue;
+				IMAGEMANAGER->frameRender("outdoorSpring", getMemDC(), _tile[i][j].rc.left, _tile[i][j].rc.top,
+					_tile[i + tileY][j + tileX].objFrameX, _tile[i + tileY][j + tileX].objFrameY);
+				break;
+			case SUMMER:
+				break;
+			case AUTUMN:
+				break;
+			case WINTER:
+				IMAGEMANAGER->frameRender("outdoorWinter", getMemDC(), _tile[i][j].rc.left, _tile[i][j].rc.top,
+					_tile[i + tileY][j + tileX].terrainFrameX, _tile[i + tileY][j + tileX].terrainFrameY);
+
+				//인게임 화면 오브젝트 그린다
+				if (_tile[i + tileY][j + tileX].obj == OBJ_NONE) continue;
+				IMAGEMANAGER->frameRender("outdoorWinter", getMemDC(), _tile[i][j].rc.left, _tile[i][j].rc.top,
+					_tile[i + tileY][j + tileX].objFrameX, _tile[i + tileY][j + tileX].objFrameY);
+				break;
+			}
 		}
 	}
 
 	//왼쪽 게임화면 및 오른쪽 샘플타일 렉트 보여주기
 	if (INPUT->GetToggleKey(VK_F1))
 	{
-		//for (int i = 0; i < TILEY; i++)
-		//{
-		//	for (int j = 0; j < TILEX; j++)
-		//	{
-		//		//Rectangle(getMemDC)
-		//		FrameRect(getMemDC(), _tile[i][j].rc, RGB(255, 255, 0));
-		//	}
-		//}
-		for (int i = 0; i < SAMPLETILEY; i++)
+		for (int i = 0; i < DISPLAYY; i++)
 		{
-			for (int j = 0; j < SAMPLETILEX; j++)
+			for (int j = 0; j < DISPLAYX; j++)
 			{
-				//Rectangle(getMemDC)
-				FrameRect(getMemDC(), _sampleTile[i][j].rc, RGB(255, 255, 0));
+				FrameRect(getMemDC(), _tile[i][j].rc, RGB(255, 255, 0));
+			}
+		}
+		for (int i = 0; i < SAMPLEDISPLAYY; i++)
+		{
+			for (int j = 0; j < SAMPLEDISPLAYX; j++)
+			{
+				if (j < sampleTileMaxFrameX && i < sampleTileMaxFrameY)
+				{
+					FrameRect(getMemDC(), _sampleTile[i][j].rc, RGB(0, 30, 80));
+				}
 			}
 		}
 	}
@@ -150,13 +203,27 @@ void maptoolScene::render()
 	textOut(getMemDC(), _rcTerrain.left + 20, _rcTerrain.top + 20, "지형");
 	textOut(getMemDC(), _rcObject.left + 20, _rcObject.top + 20, "오브젝트");
 	textOut(getMemDC(), _rcEraser.left + 20, _rcEraser.top + 20, "지우개");
+
+	if (isSelectSeason)
+	{
+		Rectangle(getMemDC(), _rcSpring);
+		Rectangle(getMemDC(), _rcSummer);
+		Rectangle(getMemDC(), _rcAutumn);
+		Rectangle(getMemDC(), _rcWinter);
+
+		textOut(getMemDC(), _rcSpring.left + 10, _rcSpring.top + 5, "봄");
+		textOut(getMemDC(), _rcSummer.left + 10, _rcSummer.top + 5, "여름");
+		textOut(getMemDC(), _rcAutumn.left + 10, _rcAutumn.top + 5, "가을");
+		textOut(getMemDC(), _rcWinter.left + 10, _rcWinter.top + 5, "겨울");
+	}
+
 	//textOut(getMemDC(), 10, 10, "맵툴화면");
 
 	Rectangle(getMemDC(), horScroll);
 	Rectangle(getMemDC(), vertScroll);
+	if (sampleTileMaxFrameX > SAMPLEDISPLAYX) { Rectangle(getMemDC(), sampleHorScroll); }
+	if (sampleTileMaxFrameY > SAMPLEDISPLAYY) { Rectangle(getMemDC(), sampleVertScroll); }
 
-	Rectangle(getMemDC(), _sphorScroll);
-	Rectangle(getMemDC(), _spvertScroll);
 
 	if(_click) FrameRect(getMemDC(), RectMake(first.left, first.top, last.right - first.left, last.bottom - first.top), RGB(255, 0, 0));
 }
@@ -164,14 +231,22 @@ void maptoolScene::render()
 void maptoolScene::maptoolSetup()
 {
 	//오른쪽 샘플타일 렉트 초기화
-	for (int i = 0; i < SAMPLETILEY; i++)
+	for (int i = 0; i < sampleTileMaxFrameY; i++)
 	{
-		for (int j = 0; j < SAMPLETILEX; j++)
+		_sampleTileX.clear();
+		for (int j = 0; j < sampleTileMaxFrameX; j++)
 		{
-			_sampleTile[i][j].rc = RectMake(660 + j * TILESIZE,50 + i * TILESIZE, TILESIZE, TILESIZE);
-			_sampleTile[i][j].terrainFrameX = j;
-			_sampleTile[i][j].terrainFrameY = i;
+			tagTile temp;
+			if (j < SAMPLEDISPLAYX && i < SAMPLEDISPLAYY)
+			{
+				temp.rc = RectMake(660 + j * TILESIZE, 50 + i * TILESIZE, TILESIZE, TILESIZE);
+			}
+			temp.terrainFrameX = j;
+			temp.terrainFrameY = i;
+
+			_sampleTileX.push_back(temp);
 		}
+		_sampleTile.push_back(_sampleTileX);
 	}
 
 	//왼쪽 인게임 화면 모두 잔디가 기본 타일이 되도록 세팅하기
@@ -180,7 +255,11 @@ void maptoolScene::maptoolSetup()
 		for (int j = 0; j < TILEX; j++)
 		{
 			//왼쪽 인게임 화면 렉트 초기화
-			_tile[i][j].rc = RectMake(50 + j * TILESIZE, 50 + i * TILESIZE, TILESIZE, TILESIZE);
+			if (j < DISPLAYX && i < DISPLAYY)
+			{
+				_tile[i][j].rc = RectMake(50 + j * TILESIZE, 50 + i * TILESIZE, TILESIZE, TILESIZE);
+			}
+			_tile[i][j].season = SPRING;
 			_tile[i][j].terrainFrameX = 0;
 			_tile[i][j].terrainFrameY = 6;
 			_tile[i][j].objFrameX = 0;
@@ -196,18 +275,23 @@ void maptoolScene::maptoolSetup()
 	_rcTerrain = RectMake(660, 400 + 100, 100, 50);
 	_rcObject = RectMake(660 + 100, 400 + 100, 100, 50);
 	_rcEraser = RectMake(660 + 200, 400 + 100, 100, 50);
+
+	_rcSpring = RectMake(660 - 100, 450, 50, 30);
+	_rcSummer = RectMake(660 - 50, 450, 50, 30);
+	_rcAutumn = RectMake(660, 450, 50, 30);
+	_rcWinter = RectMake(660 + 50, 450, 50, 30);
 }
 
 void maptoolScene::setMap()
 {
-	for (int i = 0; i < SPDISPLAYY; i++)
+	for (int i = 0; i < sampleTileMaxFrameY; i++)
 	{
-		for (int j = 0; j < SPDISPLAYY; j++)
+		for (int j = 0; j < sampleTileMaxFrameX; j++)
 		{
 			if (PtInRect(&_sampleTile[i][j].rc, _ptMouse))
 			{
-				_currentTile.x = _sampleTile[i + stileY][j + stileX].terrainFrameX;
-				_currentTile.y = _sampleTile[i + stileY][j + stileX].terrainFrameY;
+				_currentTile.x = _sampleTile[i][j + sampleTileX].terrainFrameX;
+				_currentTile.y = _sampleTile[i + sampleTileY][j].terrainFrameY;
 				break;
 			}
 		}
@@ -222,18 +306,20 @@ void maptoolScene::setMap()
 			{
 				//FrameRect(getMemDC(), _tiles[i][j].rc, RGB(255, 0, 0));
 				//현재버튼이 지형이냐?
-				/*if (_ctrlSelect == CTRL_TERRAIN)
+				if (_ctrlSelect == CTRL_TERRAIN)
 				{
 					_tile[i + tileY][j + tileX].terrainFrameX = _currentTile.x;
 					_tile[i + tileY][j + tileX].terrainFrameY = _currentTile.y;
+					_tile[i + tileY][j + tileX].season = _currentSeason;
 					_tile[i + tileY][j + tileX].terrain = terrainSelect(_currentTile.x, _currentTile.y);
-				}*/
+				}
 
 				//현재버튼이 오브젝트냐?
 				if (_ctrlSelect == CTRL_OBJECT)
 				{
 					_tile[i + tileY][j + tileX].objFrameX = _currentTile.x;
 					_tile[i + tileY][j + tileX].objFrameY = _currentTile.y;
+					_tile[i + tileY][j + tileX].season = _currentSeason;
 					_tile[i + tileY][j + tileX].obj = objectSelect(_currentTile.x, _currentTile.y);
 				}
 				//현재버튼이 지우개냐?
@@ -258,7 +344,7 @@ void maptoolScene::setTerrainMap()
 			{
 				if (_ctrlSelect == CTRL_TERRAIN)
 				{
-					if (INPUT->GetKeyDown(VK_LBUTTON))
+					if (INPUT->GetKeyDown(VK_RBUTTON))
 					{
 						_click = true;
 						first = _tile[i][j].rc;
@@ -266,13 +352,13 @@ void maptoolScene::setTerrainMap()
 						first_j = j;
 
 					}
-					if (INPUT->GetKey(VK_LBUTTON))
+					if (INPUT->GetKey(VK_RBUTTON))
 					{
 						last = _tile[i][j].rc;
 						last_i = i;
 						last_j = j;		
 					}
-					if (INPUT->GetKeyUp(VK_LBUTTON))
+					if (INPUT->GetKeyUp(VK_RBUTTON))
 					{
 						last = _tile[i][j].rc;
 						last_i = i;
@@ -282,11 +368,12 @@ void maptoolScene::setTerrainMap()
 					}
 				}
 			}
+
 		}
 	}
 	if (_click)
 	{
-		if (_ptMouse.x >= _tile[0][0].rc.left + TILESIZE * DISPLAYX)
+		if (_ptMouse.x >= _tile[0][DISPLAYX].rc.right)
 		{
 			_click = false;
 			_release = true;
@@ -300,6 +387,7 @@ void maptoolScene::setTerrainMap()
 			{
 				_tile[i + tileY][j + tileX].terrainFrameX = _currentTile.x;
 				_tile[i + tileY][j + tileX].terrainFrameY = _currentTile.y;
+				_tile[i + tileY][j + tileX].season = _currentSeason;
 				_tile[i + tileY][j + tileX].terrain = terrainSelect(_currentTile.x, _currentTile.y);
 			}
 		}
@@ -329,11 +417,11 @@ void maptoolScene::load()
 
 void maptoolScene::setScroll()
 {
-	horScroll = RectMake(_tile[0][0].rc.left, _tile[DISPLAYY][0].rc.bottom + 10, TILESIZE * DISPLAYX / 2, 10);
-	vertScroll = RectMake(_tile[0][DISPLAYX].rc.right + 10, _tile[0][0].rc.top, 10, TILESIZE * DISPLAYY / 2);
+	horScroll = RectMake(_tile[0][0].rc.left, _tile[DISPLAYY - 1][0].rc.bottom + 10, TILESIZE * DISPLAYX / 2, 10);
+	vertScroll = RectMake(_tile[0][DISPLAYX - 1].rc.right + 10, _tile[0][0].rc.top, 10, TILESIZE * DISPLAYY / 2);
 
-	_sphorScroll = RectMake(_sampleTile[0][0].rc.left, _sampleTile[SPDISPLAYY][0].rc.bottom, TILESIZE * SPDISPLAYX / 2, 10);
-	_spvertScroll = RectMake(_sampleTile[0][SPDISPLAYX].rc.right, _sampleTile[0][0].rc.top, 10, TILESIZE * SPDISPLAYY / 2);
+	sampleHorScroll = RectMake(_sampleTile[0][0].rc.left, _sampleTile[SAMPLEDISPLAYY][0].rc.bottom + 10, TILESIZE * SAMPLEDISPLAYX / 2, 10);
+	sampleVertScroll = RectMake(_sampleTile[0][SAMPLEDISPLAYX].rc.right + 10, _sampleTile[0][0].rc.top, 10, TILESIZE * SAMPLEDISPLAYY / 2);
 }
 
 void maptoolScene::lockScroll()
@@ -352,20 +440,19 @@ void maptoolScene::lockScroll()
 		currentScroll.y = vertScroll.top;
 		isVertLock = true;
 	}
-
-	if (PtInRect(&_sphorScroll, _ptMouse))
+	else if (PtInRect(&sampleHorScroll, _ptMouse))
 	{
 		scrollLock = _ptMouse;
-		currentScroll.x = _sphorScroll.left;
-		currentScroll.y = _sphorScroll.top;
-		isSpHorLock = true;
+		currentScroll.x = sampleHorScroll.left;
+		currentScroll.y = sampleHorScroll.top;
+		isSampleHorLock = true;
 	}
-	else if (PtInRect(&_spvertScroll, _ptMouse))
+	else if (PtInRect(&sampleVertScroll, _ptMouse))
 	{
 		scrollLock = _ptMouse;
-		currentScroll.x = _spvertScroll.left;
-		currentScroll.y = _spvertScroll.top;
-		isSpVertLock = true;
+		currentScroll.x = sampleVertScroll.left;
+		currentScroll.y = sampleVertScroll.top;
+		isSampleVertLock = true;
 	}
 }
 
@@ -373,7 +460,7 @@ void maptoolScene::moveScroll()
 {
 	if (isHorLock)
 	{
-		horScroll = RectMake(currentScroll.x + (_ptMouse.x - scrollLock.x), _tile[DISPLAYY][0].rc.bottom + 10, TILESIZE * DISPLAYX / 2, 10);
+		horScroll = RectMake(currentScroll.x + (_ptMouse.x - scrollLock.x), _tile[DISPLAYY - 1][0].rc.bottom + 10, TILESIZE * DISPLAYX / 2, 10);
 		if (horScroll.left < _tile[0][0].rc.left)
 		{
 			horScroll.left = _tile[0][0].rc.left;
@@ -387,7 +474,7 @@ void maptoolScene::moveScroll()
 	}
 	else if (isVertLock)
 	{
-		vertScroll = RectMake(_tile[0][DISPLAYX].rc.right + 10, currentScroll.y + (_ptMouse.y - scrollLock.y), 10, TILESIZE * DISPLAYY / 2);
+		vertScroll = RectMake(_tile[0][DISPLAYX - 1].rc.right + 10, currentScroll.y + (_ptMouse.y - scrollLock.y), 10, TILESIZE * DISPLAYY / 2);
 		if (vertScroll.top < _tile[0][0].rc.top)
 		{
 			vertScroll.top = _tile[0][0].rc.top;
@@ -399,33 +486,32 @@ void maptoolScene::moveScroll()
 			vertScroll.bottom = _tile[0][0].rc.top + TILESIZE * DISPLAYY;
 		}
 	}
-
-	if (isSpHorLock)
+	else if (isSampleHorLock)
 	{
-		_sphorScroll = RectMake(currentScroll.x + (_ptMouse.x - scrollLock.x), _sampleTile[SPDISPLAYY][0].rc.bottom, TILESIZE * SPDISPLAYX / 2, 10);
-		if (_sphorScroll.left < _sampleTile[0][0].rc.left)
+		sampleHorScroll = RectMake(currentScroll.x + (_ptMouse.x - scrollLock.x), _sampleTile[sampleTileMaxFrameY - 1][0].rc.bottom + 10, TILESIZE * SAMPLEDISPLAYX / 2, 10);
+		if (sampleHorScroll.left < _sampleTile[0][0].rc.left)
 		{
-			_sphorScroll.left = _sampleTile[0][0].rc.left;
-			_sphorScroll.right = _sampleTile[0][0].rc.left + TILESIZE * SPDISPLAYX / 2;
+			sampleHorScroll.left = _sampleTile[0][0].rc.left;
+			sampleHorScroll.right = _sampleTile[0][0].rc.left + TILESIZE * SAMPLEDISPLAYX / 2;
 		}
-		else if (_sphorScroll.left > _sampleTile[0][0].rc.left + TILESIZE * SPDISPLAYX / 2)
+		else if (sampleHorScroll.left > _sampleTile[0][0].rc.left + TILESIZE * SAMPLEDISPLAYX / 2)
 		{
-			_sphorScroll.left = _sampleTile[0][0].rc.left + TILESIZE * SPDISPLAYX / 2;
-			_sphorScroll.right = _sampleTile[0][0].rc.left + TILESIZE * SPDISPLAYX;
+			sampleHorScroll.left = _sampleTile[0][0].rc.left + TILESIZE * SAMPLEDISPLAYX / 2;
+			sampleHorScroll.right = _sampleTile[0][0].rc.left + TILESIZE * SAMPLEDISPLAYX;
 		}
 	}
-	else if (isSpVertLock)
+	else if (isSampleVertLock)
 	{
-		_spvertScroll = RectMake(_sampleTile[0][SPDISPLAYX].rc.right, currentScroll.y + (_ptMouse.y - scrollLock.y), 10, TILESIZE * SPDISPLAYY / 2);
-		if (_spvertScroll.top < _sampleTile[0][0].rc.top)
+		sampleVertScroll = RectMake(_sampleTile[0][sampleTileMaxFrameX - 1].rc.right + 10, currentScroll.y + (_ptMouse.y - scrollLock.y), 10, TILESIZE * SAMPLEDISPLAYY / 2);
+		if (sampleVertScroll.top < _sampleTile[0][0].rc.top)
 		{
-			_spvertScroll.top = _sampleTile[0][0].rc.top;
-			_spvertScroll.bottom = _sampleTile[0][0].rc.top + TILESIZE * SPDISPLAYY / 2;
+			sampleVertScroll.top = _sampleTile[0][0].rc.top;
+			sampleVertScroll.bottom = _sampleTile[0][0].rc.top + TILESIZE * SAMPLEDISPLAYY / 2;
 		}
-		else if (_spvertScroll.top > _sampleTile[0][0].rc.top + TILESIZE * SPDISPLAYY / 2)
+		else if (sampleVertScroll.top > _sampleTile[0][0].rc.top + TILESIZE * SAMPLEDISPLAYY / 2)
 		{
-			_spvertScroll.top = _sampleTile[0][0].rc.top + TILESIZE * SPDISPLAYY / 2;
-			_spvertScroll.bottom = _sampleTile[0][0].rc.top + TILESIZE * SPDISPLAYY;
+			sampleVertScroll.top = _sampleTile[0][0].rc.top + TILESIZE * SAMPLEDISPLAYY / 2;
+			sampleVertScroll.bottom = _sampleTile[0][0].rc.top + TILESIZE * SAMPLEDISPLAYY;
 		}
 	}
 }
@@ -435,8 +521,111 @@ void maptoolScene::moveTile()
 	tileX = (float)(horScroll.left - _tile[0][0].rc.left) / (float)((float)(TILESIZE * (float)(DISPLAYX / 2) / (float)(TILEX - DISPLAYX)));
 	tileY = (float)(vertScroll.top - _tile[0][0].rc.top) / (float)((float)(TILESIZE * (float)(DISPLAYY / 2) / (float)(TILEX - DISPLAYX)));
 
-	stileX = (float)(_sphorScroll.left - _sampleTile[0][0].rc.left) / (float)((float)(TILESIZE * (float)(SPDISPLAYX / 2) / (float)(SAMPLETILEX - SPDISPLAYX)));
-	stileY = (float)(_spvertScroll.top - _sampleTile[0][0].rc.top) / (float)((float)(TILESIZE * (float)(SPDISPLAYY / 2) / (float)(SAMPLETILEY - SPDISPLAYX)));
+	if (sampleTileMaxFrameX > SAMPLEDISPLAYX)
+	{
+		sampleTileX = (float)(sampleHorScroll.left - _sampleTile[0][0].rc.left) / (float)((float)(TILESIZE * (float)(SAMPLEDISPLAYX / 2) / (float)(sampleTileMaxFrameX - SAMPLEDISPLAYX)));
+	}
+	if (sampleTileMaxFrameY > SAMPLEDISPLAYY)
+	{
+		sampleTileY = (float)(sampleVertScroll.top - _sampleTile[0][0].rc.top) / (float)((float)(TILESIZE * (float)(SAMPLEDISPLAYY / 2) / (float)(sampleTileMaxFrameY - SAMPLEDISPLAYY)));
+	}
+}
+
+void maptoolScene::selectSeason()
+{
+	if (isSelectSeason)
+	{
+		if (PtInRect(&_rcSpring, _ptMouse))
+		{
+			_currentSeason = SPRING;
+			sampleTileMaxFrameX = IMAGEMANAGER->findImage("outdoorSpring")->getMaxFrameX() + 1;
+			sampleTileMaxFrameY = IMAGEMANAGER->findImage("outdoorSpring")->getMaxFrameY() + 1;
+			resetSampleTile();
+			sampleTileX = sampleTileY = 0;
+			if (sampleTileMaxFrameX > SAMPLEDISPLAYX)
+			{
+				if (sampleTileMaxFrameY > SAMPLEDISPLAYY)
+				{
+					sampleHorScroll = RectMake(_sampleTile[0][0].rc.left, _sampleTile[SAMPLEDISPLAYY - 1][0].rc.bottom + 10, TILESIZE * SAMPLEDISPLAYX / 2, 10);
+				}
+				else
+				{
+					sampleHorScroll = RectMake(_sampleTile[0][0].rc.left, _sampleTile[sampleTileMaxFrameY - 1][0].rc.bottom + 10, TILESIZE * SAMPLEDISPLAYX / 2, 10);
+				}
+			}
+			if (sampleTileMaxFrameY > SAMPLEDISPLAYY)
+			{
+				if (sampleTileMaxFrameX > SAMPLEDISPLAYX)
+				{
+					sampleVertScroll = RectMake(_sampleTile[0][SAMPLEDISPLAYX - 1].rc.right + 10, _sampleTile[0][0].rc.top, 10, TILESIZE * SAMPLEDISPLAYY / 2);
+				}
+				else
+				{
+					sampleVertScroll = RectMake(_sampleTile[0][sampleTileMaxFrameX - 1].rc.right + 10, _sampleTile[0][0].rc.top, 10, TILESIZE * SAMPLEDISPLAYY / 2);
+				}
+			}
+		}
+		if (PtInRect(&_rcSummer, _ptMouse))
+		{ 
+			_currentSeason = SUMMER;
+		}
+		if (PtInRect(&_rcAutumn, _ptMouse))
+		{
+			_currentSeason = AUTUMN;
+		}
+		if (PtInRect(&_rcWinter, _ptMouse))
+		{
+			_currentSeason = WINTER;
+			sampleTileMaxFrameX = IMAGEMANAGER->findImage("outdoorWinter")->getMaxFrameX() + 1;
+			sampleTileMaxFrameY = IMAGEMANAGER->findImage("outdoorWinter")->getMaxFrameY() + 1;
+			resetSampleTile();
+			sampleTileX = sampleTileY = 0;
+			if (sampleTileMaxFrameX > SAMPLEDISPLAYX)
+			{
+				if (sampleTileMaxFrameY > SAMPLEDISPLAYY)
+				{
+					sampleHorScroll = RectMake(_sampleTile[0][0].rc.left, _sampleTile[SAMPLEDISPLAYY - 1][0].rc.bottom + 10, TILESIZE * SAMPLEDISPLAYX / 2, 10);
+				}
+				else
+				{
+					sampleHorScroll = RectMake(_sampleTile[0][0].rc.left, _sampleTile[sampleTileMaxFrameY - 1][0].rc.bottom + 10, TILESIZE * SAMPLEDISPLAYX / 2, 10);
+				}
+			}
+			if (sampleTileMaxFrameY > SAMPLEDISPLAYY)
+			{
+				if (sampleTileMaxFrameX > SAMPLEDISPLAYX)
+				{
+					sampleHorScroll = RectMake(_sampleTile[0][0].rc.left, _sampleTile[0][SAMPLEDISPLAYX - 1].rc.bottom + 10, TILESIZE * SAMPLEDISPLAYX / 2, 10);
+				}
+				else
+				{
+					sampleVertScroll = RectMake(_sampleTile[0][sampleTileMaxFrameX - 1].rc.right + 10, _sampleTile[0][0].rc.top, 10, TILESIZE * SAMPLEDISPLAYY / 2);
+				}
+			}
+		}
+	}
+}
+
+void maptoolScene::resetSampleTile()
+{
+	_sampleTile.clear();
+	for (int i = 0; i < sampleTileMaxFrameY; i++)
+	{
+		_sampleTileX.clear();
+		for (int j = 0; j < sampleTileMaxFrameX; j++)
+		{
+			tagTile temp;
+			if (j < sampleTileMaxFrameX && i < sampleTileMaxFrameY)
+			{
+				temp.rc = RectMake(660 + j * TILESIZE, 50 + i * TILESIZE, TILESIZE, TILESIZE);
+			}
+			temp.terrainFrameX = j;
+			temp.terrainFrameY = i;
+
+			_sampleTileX.push_back(temp);
+		}
+		_sampleTile.push_back(_sampleTileX);
+	}
 }
 
 TERRAIN maptoolScene::terrainSelect(int frameX, int frameY)
